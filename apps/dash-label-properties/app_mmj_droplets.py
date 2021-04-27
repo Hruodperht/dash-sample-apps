@@ -60,7 +60,11 @@ def baseline_of_the_row(row):
 
 
 # Set up the app
-external_stylesheets = [dbc.themes.BOOTSTRAP, "assets/object_properties_style.css"]
+# external_stylesheets = [dbc.themes.BOOTSTRAP, "assets/object_properties_style.css"]
+external_stylesheets = [dbc.themes.LITERA, "assets/object_properties_style.css"]
+# themes at:
+# https://bootswatch.com/solar/
+# https://dash-bootstrap-components.opensource.faculty.ai/docs/components/layout/
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 
@@ -133,13 +137,24 @@ label_array = label(cleared)  # colored objects map
 current_labels = np.unique(label_array)[np.nonzero(np.unique(label_array))]
 
 # Compute and store properties of the labeled image
+# prop_names = [
+#     "label",
+#     "area",
+#     "perimeter",
+#     "eccentricity",
+#     "euler_number",
+#     "mean_intensity",
+# ]
 prop_names = [
-    "label",
-    "area",
-    "perimeter",
+    'label',
     "eccentricity",
-    "euler_number",
-    "mean_intensity",
+    'area',
+    'filled_area',
+    'minor_axis_length',
+    'major_axis_length',
+    'equivalent_diameter',
+    'orientation',
+    'weighted_local_centroid',
 ]
 prop_table = measure.regionprops_table(
     label_array, intensity_image=img, properties=prop_names
@@ -151,6 +166,20 @@ table = pd.DataFrame(prop_table)
 # print(table.head())
 # TODO: Computig actual properties in µm, mm, etc.
 table = table[table["area"] > 1000]
+table["area"] = table["area"] * 0.01 * 0.01
+table['eccentricity'] = table['eccentricity'] .round(2)
+
+# https://stackoverflow.com/questions/55692129/how-to-use-skimage-measure-regionprops-to-query-labels
+# def mp(entry, map_dict):
+#     # return mapper_dict[entry] if entry in mapper_dict else entry
+#     return map_dict.get(entry, entry)
+#
+#
+# mapper_dict = dict(zip(table['label'].values, table['new_label'].values))
+# label_array = np.vectorize(label_array, mapper_dict)
+#
+#
+# table['label'] = table['new_label']
 
 # Format the Table columns
 columns = [
@@ -321,7 +350,8 @@ header = dbc.Navbar(
                     dbc.Col(
                         html.A(
                             html.Img(
-                                src=app.get_asset_url("dash-logo-new.png"),
+                                # src=app.get_asset_url("dash-logo-new.png"),
+                                src=app.get_asset_url("singapore_label_white.png"),
                                 height="30px",
                             ),
                             href="https://plotly.com/dash/",
