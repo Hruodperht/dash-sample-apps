@@ -423,7 +423,11 @@ image_card = dbc.Card(
                     dbc.Col(
                         "Use the dropdown menu to select which variable to base the colorscale on:"
                     ),
-                    dbc.Col(id="col-drop-menu", children={}),
+                    dbc.Col(dcc.Dropdown(
+                        id="color-drop-menu",
+                        options=[],
+                        value=None,
+    )),
                     # dbc.Toast(
                     #     [
                     #         html.P(
@@ -649,43 +653,48 @@ from dash.exceptions import PreventUpdate
     [Output('output_state', 'children'),
      Output("table", 'children'),
      Output("graph", "figure"),
-     Output("col-drop-menu", "children")],
-    [Input(component_id='submit_button', component_property='n_clicks')],
+     Output("color-drop-menu", "options"),
+     Output("color-drop-menu", "value")],
+    [Input(component_id='submit_button', component_property='n_clicks'),
+     Input("color-drop-menu", "options"),
+     Input("color-drop-menu", "value")],
     [State(component_id='input_state', component_property='value')]
 )
-def update_output(num_clicks, val_selected):
-    if val_selected is None:
+def update_output(num_clicks, drop_menu_state_options, drop_menu_state_selected, inserted_path):
+    if inserted_path is None:
         raise PreventUpdate
-    if val_selected == "":
+    if inserted_path == "":
         raise PreventUpdate
     else:
         try:
-            wf = pd.read_csv(str(val_selected), header=None, delimiter=";", decimal=',')
+            wf = pd.read_csv(str(inserted_path), header=None, delimiter=";", decimal=',')
             print(' ... LOADED')
             # print(wf.columns[0])
             props_table, current_labels, columns, initial_columns, img, label_array =\
                 read_and_process_file(wf)
             data_table = cout_data_table(None, props_table, None)
-            # fig = image_with_contour(table, label_array, img, current_labels, data_table, ['area'], color_column="area")
-            # fig = fig_short(img, props_table)
-            val_active = 'label'
+            drop_menu_options = [{"label": col_name.capitalize(), "value": col_name}
+                                 for col_name in props_table.columns]
+            if len(drop_menu_state_options) == 0:
+                val_active = 'label'
+            else:
+                # val_active = drop_menu_options[0].values()
+                val_active = drop_menu_state_selected
             fig = cout_data_figure(img, props_table, props_table, label_array, active_columns=['label', 'area'], color_column=val_active)
-            drop_menu = dcc.Dropdown(id="color-drop-menu",
-                                     options=[{"label": col_name.capitalize(), "value": col_name}
-                                              for col_name in props_table.columns],
-                                     value=val_active, )
+            drop_menu_value = val_active
+
             print(' ... OUTPUT')
             button_text = 'Filepath: "{}"'\
-                          ' (the button has been clicked {} times)'.format(val_selected, num_clicks)
-            return [button_text, data_table, fig, drop_menu]
+                          ' (the button has been clicked {} times)'.format(inserted_path, num_clicks)
+            return [button_text, data_table, fig, drop_menu_options, drop_menu_value]
         except Exception as e:
             tb = traceback.format_exc()
             print(' ... ERROR')
             print(e, tb)
             button_text = 'No file at provided path: '\
                           '"{}"'\
-                          ' (the button has been clicked {} times)'.format(val_selected, num_clicks)
-            return [button_text, None, None, None]
+                          ' (the button has been clicked {} times)'.format(inserted_path, num_clicks)
+            return [button_text, None, None, [], None]
 
 
 
