@@ -697,8 +697,5 @@ def update_output(num_clicks, drop_menu_state_options, drop_menu_state_selected,
             return [button_text, None, None, [], None]
 
 
-
-
-
 if __name__ == "__main__":
     app.run_server(debug=True)
