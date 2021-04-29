@@ -86,6 +86,7 @@ filename = (
 
 def read_and_process_file(fn):
     wf = pd.read_csv(fn, header=None, delimiter=";", decimal=',')
+    print(wf)
     # Clean of -99 errors
     cut_off_value = -5.2  # Keyence LJ-V7020, Measurement range, Z-axis (height): ±2.6 mm (F.S.=5.2 mm)
     start_min = np.nanmin(wf.values)
@@ -218,7 +219,8 @@ def read_and_process_file(fn):
 table, current_labels, columns, initial_columns, img, label_array = read_and_process_file(filename)
 
 def read_and_process_file_binary(fn):
-    wf = pd.read_csv(fn, header=None, delimiter=";", decimal=',')
+    # wf = pd.read_csv(fn, header=None, delimiter=";", decimal=',')
+    wf = fn
     # Clean of -99 errors
     cut_off_value = -5.2  # Keyence LJ-V7020, Measurement range, Z-axis (height): ±2.6 mm (F.S.=5.2 mm)
     start_min = np.nanmin(wf.values)
@@ -496,7 +498,7 @@ header = dbc.Navbar(
                             html.Img(
                                 # src=app.get_asset_url("dash-logo-new.png"),
                                 src=app.get_asset_url("singapore_label_white.png"),
-                                height="30px",
+                                height="60px",
                             ),
                             href="https://fraunhofer.sg/",
                         )
@@ -582,13 +584,13 @@ image_card = dbc.Card(
                 dbc.Col(
                     dcc.Graph(
                         id="graph",
-                        figure=image_with_contour(
-                            img,
-                            current_labels,
-                            table,
-                            initial_columns,
-                            color_column="area",
-                        ),
+                        figure={}#image_with_contour(
+                        #     img,
+                        #     current_labels,
+                        #     table,
+                        #     initial_columns,
+                            #,color_column="area",
+                        #),
                     ),
                 )
             )
@@ -702,18 +704,18 @@ def parse_contents(contents, filename, date):
         if '.csv' in filename:
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
+                io.StringIO(decoded.decode('utf-8')), header=None, delimiter=";", decimal=',')
         elif '.xls' in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
         return html.Div([
             html.P(filename),
-        ])
+        ]), df
     except Exception as e:
         print(e)
         return html.Div([
         html.P('There was an error processing this file.'),
-        ])
+        ]), pd.DataFrame()
 
 
 
@@ -751,24 +753,19 @@ def highlight_filter(
     """
     print(list_of_names, list_of_dates)
     if list_of_contents is not None:
-        print(list_of_contents[:20])
-        children = [parse_contents(list_of_contents, list_of_names, list_of_dates)]
-        try:
-            content_type, content_string = list_of_contents[0].split(',')
-            decoded = base64.b64decode(content_string)
-            table_loc, current_labels_loc, columns_loc, initial_columns_loc, img_loc, label_array_loc = \
-                read_and_process_file_binary(io.StringIO(decoded.decode('utf-8')))
-            table = table_loc
-            current_labels = current_labels_loc
-            columns = columns_loc
-            initial_columns = initial_columns_loc
-            img_in = img_loc
-            label_array_in = label_array_loc
+        print(list_of_contents[:30])
+        child, df = parse_contents(list_of_contents, list_of_names, list_of_dates)
+        children = [child]
+        table_loc, current_labels_loc, columns_loc, initial_columns_loc, img_loc, label_array_loc = \
+            read_and_process_file_binary(df)
+        table = table_loc
+        current_labels = current_labels_loc
+        columns = columns_loc
+        initial_columns = initial_columns_loc
+        img_in = img_loc
+        label_array_in = label_array_loc
 
-        except:
-            img_in = img
-            label_array_in = label_array
-            pass
+
     else:
         img_in = img
         label_array_in = label_array
@@ -776,6 +773,7 @@ def highlight_filter(
         html.P("No user's file processed, yet."),
         ])]
 
+    # table, current_labels, columns, initial_columns, img, label_array
     # If no color column is selected, open a popup to ask the user to select one.
     if color_column is None:
         return [dash.no_update, dash.no_update, True, children]
@@ -830,31 +828,6 @@ def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
-
-
-
-
-
-# @app.callback([Output('output-data-upload', 'children'),
-#                Output('graph', 'figure')],
-#               Input('upload-data', 'contents'),
-#               State('upload-data', 'filename'),
-#               State('upload-data', 'last_modified'))
-# def update_output(list_of_contents, list_of_names, list_of_dates):
-#     print(list_of_names, list_of_dates)
-#     if list_of_contents is not None:
-#         children = [
-#             parse_contents(c, n, d) for c, n, d in
-#             zip(list_of_contents, list_of_names, list_of_dates)]
-#         figure = image_with_contour(img,
-#                                     current_labels,
-#                                     table,
-#                                     initial_columns,
-#                                     color_column="area",
-#                                     )
-#         return children, figure
-
-
 
 
 if __name__ == "__main__":
