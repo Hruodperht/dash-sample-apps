@@ -390,7 +390,6 @@ header = dbc.Navbar(
 )
 
 
-
 # Define Cards
 # value="assets/sample_droplets.csv"
 file_card = dbc.Card([
