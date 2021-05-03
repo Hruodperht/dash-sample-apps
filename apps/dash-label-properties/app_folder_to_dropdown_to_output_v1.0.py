@@ -220,7 +220,9 @@ def cout_data_table(table):
     State(component_id='dropdown_row_names', component_property='options'))
 def get_row_names(chosen_file_path_from_dropdown, options):
     if chosen_file_path_from_dropdown is None:
-        raise PreventUpdate
+        dt = cout_data_table(pd.DataFrame())
+        return [dt]
+        # raise PreventUpdate
     else:
         fp = chosen_file_path_from_dropdown
         df = pd.read_csv(fp, header=None, delimiter=";", decimal=',')
