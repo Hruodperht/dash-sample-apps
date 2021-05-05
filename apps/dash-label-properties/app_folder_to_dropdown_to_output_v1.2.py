@@ -27,7 +27,7 @@ server = app.server
 
 
 # Define Modal
-with open("../assets/modal.md", "r") as f:
+with open("assets/modal.md", "r") as f:
     howto_md = f.read()
 
 modal_overlay = dbc.Modal(
@@ -208,8 +208,7 @@ table_card = dbc.Card(
         dbc.CardHeader(html.H2("Data Table")),
         dbc.CardBody(
             dbc.Row(
-                dbc.Col(spin_it([html.Div(id="table", children={})])
-                )
+                dbc.Col([html.Div(id="table", children={})])
             )
         ),
     ]
@@ -661,6 +660,26 @@ def get_row_names(chosen_file_path_from_dropdown, options):
                                        style={'text-align': 'center'})]
             col_drop_opt = []
             return [dt, graph_children, col_drop_opt]
+
+
+@app.callback(
+    Output("table-line", "style_data_conditional"),
+    [Input("actual-graph", "hoverData")],
+    prevent_initial_call=True,
+)
+def higlight_row(string):
+    """
+    When hovering hover label, highlight corresponding row in table,
+    using label column.
+    """
+    index = string["points"][0]["customdata"]
+    return [
+        {
+            "if": {"filter_query": "{label} eq %d" % index},
+            "backgroundColor": "#3D9970",
+            "color": "white",
+        }
+    ]
 
 
 if __name__ == "__main__":
